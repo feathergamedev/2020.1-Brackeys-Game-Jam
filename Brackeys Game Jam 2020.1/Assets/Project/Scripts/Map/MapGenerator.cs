@@ -40,7 +40,7 @@ public class MapGenerator : MonoBehaviour
         }
     }
 
-    public Block CreateBlock(BlockType blockType)
+    public Block CreateBlock(BlockType blockType, Vector2Int coordinate)
     {
         for (int i=0; i<m_allBlocks.Count; i++)
         {
@@ -48,6 +48,9 @@ public class MapGenerator : MonoBehaviour
             {
                 var blockObject = Instantiate(m_allBlocks[i].Prefab);
                 var newBlock = blockObject.GetComponent<Block>();
+                newBlock.Coordinate = coordinate;
+                newBlock.CurBlockType = blockType;
+
                 SetBlock(newBlock);
                 return newBlock;
             }
@@ -60,6 +63,7 @@ public class MapGenerator : MonoBehaviour
     public void SetBlock(Block block)
     {
         block.transform.SetParent(MapManager.instance.m_blockRoot);
+        block.transform.localScale = Vector3.one;
 
         var coordinate = block.Coordinate;
         var newPos = m_blockOriginPos + new Vector2(coordinate.x * m_blockDistance, coordinate.y * m_blockDistance);

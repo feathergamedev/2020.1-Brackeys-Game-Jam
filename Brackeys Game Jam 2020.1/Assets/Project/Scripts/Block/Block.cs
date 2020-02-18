@@ -5,8 +5,7 @@ using UnityEngine;
 public class Block : MonoBehaviour
 {
 
-    [SerializeField]
-    private BlockType m_blockType;
+    public BlockType CurBlockType;
 
     [SerializeField]
     private Vector2Int m_coordinate;
@@ -18,7 +17,7 @@ public class Block : MonoBehaviour
         {
             return m_coordinate;
         }
-        private set
+        set
         {
             m_coordinate = value;
         }
@@ -33,20 +32,46 @@ public class Block : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.D))
-            TakeDamage(1);
+
     }
 
-    public void TakeDamage(int damage)
+    public void GetTrampled(int damage)
     {
         var isNotDestructable = false;
 
         if (isNotDestructable)
             return;
 
-        if (m_blockType == BlockType.Hole)
+        if ((int)CurBlockType + damage >= (int)BlockType.Hole)
             return;
 
-        MapManager.instance.ReplaceBlock(m_coordinate, (BlockType)((int)m_blockType + 1));
+        var nextType = (BlockType)((int)CurBlockType + damage);
+
+        MapManager.instance.ReplaceBlock(m_coordinate, nextType);
+    }
+
+    public void GetExploded()
+    {
+        if (CurBlockType == BlockType.Hole)
+            return;
+
+        MapManager.instance.ReplaceBlock(m_coordinate, BlockType.Hole);
+    }
+
+    // Called when neighbor explode.
+    public void AffectedByNeighbor()
+    {
+        switch (CurBlockType)
+        {
+            case BlockType.NormalFloor_0:
+            case BlockType.NormalFloor_1:
+                GetTrampled(1);
+                break;
+            case BlockType.NormalFloor_2:
+                GetExploded();
+                break;
+            default:
+                break;
+        }
     }
 }

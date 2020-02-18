@@ -4,6 +4,7 @@ using UnityEngine;
 
 public enum BlockType
 {
+    Empty = -1,
     NormalFloor_0 = 0,
     NormalFloor_1 = 1,
     NormalFloor_2 = 2,
@@ -46,7 +47,10 @@ public class MapManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            m_blocks[new Vector2Int(2, 0)].GetExploded();
+        }
     }
 
     public void MoveTo(Actor actor, Vector2Int target)
@@ -62,16 +66,61 @@ public class MapManager : MonoBehaviour
 
     public bool IsSteppable(Vector2Int coordinate)
     {
-        // Temp, return true as long as block exist.
-        return (m_blocks.ContainsKey(coordinate));
+        if (m_blocks.ContainsKey(coordinate) == false)
+            return false;
+
+        var block = m_blocks[coordinate];
+
+        if (block.CurBlockType == BlockType.Hole)
+            return false;
+
+        block.GetTrampled(1);
+
+        return true;
     }
 
     public void ReplaceBlock(Vector2Int coordinate, BlockType type)
     {
+        Destroy(m_blocks[coordinate]);
         m_blocks.Remove(coordinate);
-        var newBlock = m_mapGenerator.CreateBlock(type);
+        var newBlock = m_mapGenerator.CreateBlock(type, coordinate);
 
         m_blocks.Add(coordinate, newBlock);
+
+        if (type == BlockType.Hole)
+        {
+            ExplodeAffectNeighbors(coordinate);
+        }
+    }
+
+    void ExplodeAffectNeighbors(Vector2Int coordinate)
+    {
+        var checkList = new List<Block>();
+
+        if (m_blocks.ContainsKey(coordinate + Direction.Left.ToVec2()))
+        {
+            checkList.Add(m_blocks[coordinate + Direction.Left.ToVec2()]);
+        }
+
+        if (m_blocks.ContainsKey(coordinate + Direction.Right.ToVec2()))
+        {
+            checkList.Add(m_blocks[coordinate + Direction.Right.ToVec2()]);
+        }
+
+        if (m_blocks.ContainsKey(coordinate + Direction.Up.ToVec2()))
+        {
+            checkList.Add(m_blocks[coordinate + Direction.Up.ToVec2()]);
+        }
+
+        if (m_blocks.ContainsKey(coordinate + Direction.Down.ToVec2()))
+        {
+            checkList.Add(m_blocks[coordinate + Direction.Down.ToVec2()]);
+        }
+
+        foreach(Block b in checkList)
+        {
+            b.AffectedByNeighbor();
+        }
     }
 
     void BlockSetup()
