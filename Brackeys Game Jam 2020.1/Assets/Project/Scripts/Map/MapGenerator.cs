@@ -4,12 +4,21 @@ using UnityEngine;
 
 public class MapGenerator : MonoBehaviour
 {
+    [System.Serializable]
+    struct BlockInfo
+    {
+        public BlockType Type;
+        public GameObject Prefab;
+    }
 
     [SerializeField]
     private Vector2 m_blockOriginPos;
 
     [SerializeField]
     private float m_blockDistance;
+
+    [SerializeField]
+    private List<BlockInfo> m_allBlocks;
 
     [SerializeField]
     private GameObject m_blockPrefab;
@@ -20,7 +29,7 @@ public class MapGenerator : MonoBehaviour
         
     }
 
-    public void GenerateMap(ref Dictionary<Vector2Int, Block> map, Transform blockRoot)
+    public void GenerateMap(Transform blockRoot)
     {
         for(int i=0; i<blockRoot.childCount; i++)
         {
@@ -29,5 +38,31 @@ public class MapGenerator : MonoBehaviour
             var newPos = m_blockOriginPos + new Vector2(coordinate.x * m_blockDistance, coordinate.y * m_blockDistance);
             block.transform.localPosition = newPos;
         }
+    }
+
+    public Block CreateBlock(BlockType blockType)
+    {
+        for (int i=0; i<m_allBlocks.Count; i++)
+        {
+            if (m_allBlocks[i].Type == blockType)
+            {
+                var blockObject = Instantiate(m_allBlocks[i].Prefab);
+                var newBlock = blockObject.GetComponent<Block>();
+                SetBlock(newBlock);
+                return newBlock;
+            }
+        }
+
+        Debug.LogError("Block not found.");
+        return null;
+    }
+
+    public void SetBlock(Block block)
+    {
+        block.transform.SetParent(MapManager.instance.m_blockRoot);
+
+        var coordinate = block.Coordinate;
+        var newPos = m_blockOriginPos + new Vector2(coordinate.x * m_blockDistance, coordinate.y * m_blockDistance);
+        block.transform.localPosition = newPos;
     }
 }

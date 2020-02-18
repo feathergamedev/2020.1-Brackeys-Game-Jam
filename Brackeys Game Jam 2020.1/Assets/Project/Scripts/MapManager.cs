@@ -2,6 +2,14 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum BlockType
+{
+    NormalFloor_0 = 0,
+    NormalFloor_1 = 1,
+    NormalFloor_2 = 2,
+    Hole = 3,
+}
+
 public class MapManager : MonoBehaviour
 {
     public static MapManager instance;
@@ -9,16 +17,16 @@ public class MapManager : MonoBehaviour
     [SerializeField]
     private MapGenerator m_mapGenerator;
 
+
+
     private Dictionary<Vector2Int, Block> m_blocks;
 
     [SerializeField]
     private List<Actor> m_actors;
 
-    [SerializeField]
-    private Transform m_blockRoot;
+    public Transform m_blockRoot;
 
-    [SerializeField]
-    private Transform m_actorRoot;
+    public Transform m_actorRoot;
 
     private void Awake()
     {
@@ -58,6 +66,14 @@ public class MapManager : MonoBehaviour
         return (m_blocks.ContainsKey(coordinate));
     }
 
+    public void ReplaceBlock(Vector2Int coordinate, BlockType type)
+    {
+        m_blocks.Remove(coordinate);
+        var newBlock = m_mapGenerator.CreateBlock(type);
+
+        m_blocks.Add(coordinate, newBlock);
+    }
+
     void BlockSetup()
     {
         m_blocks = new Dictionary<Vector2Int, Block>();
@@ -68,7 +84,7 @@ public class MapManager : MonoBehaviour
             m_blocks.Add(newBlock.Coordinate, newBlock);
         }
 
-        m_mapGenerator.GenerateMap(ref m_blocks, m_blockRoot);
+        m_mapGenerator.GenerateMap(m_blockRoot);
     }
 
     void ActorSetup()
