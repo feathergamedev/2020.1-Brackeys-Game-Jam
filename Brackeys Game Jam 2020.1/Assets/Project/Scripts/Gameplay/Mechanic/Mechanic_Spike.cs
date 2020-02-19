@@ -2,9 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class LevelInfo : MonoBehaviour
+public class Mechanic_Spike : MonoBehaviour, IMechanic
 {
-
     // Start is called before the first frame update
     void Start()
     {
@@ -15,5 +14,10 @@ public class LevelInfo : MonoBehaviour
     void Update()
     {
         
+    }
+
+    public void Triggered()
+    {
+        EventEmitter.Emit(GameEvent.LevelFail);
     }
 }

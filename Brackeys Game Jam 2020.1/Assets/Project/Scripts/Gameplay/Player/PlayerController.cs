@@ -1,16 +1,18 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public enum PlayerState
 {
+    Prepare,
     Walk,
     Dig,
 }
 
 public class PlayerController : MonoBehaviour
 {
-
+    [SerializeField]
     private PlayerState m_curPlayerState;
 
     public PlayerState CurPlayerState
@@ -35,7 +37,25 @@ public class PlayerController : MonoBehaviour
     private float m_digSpeed;
 
     [SerializeField]
+    private float m_maxEnergy;
+
+    private float m_curEnergy;
+
+    [SerializeField]
+    private float m_energyConsumeRate, m_energyRefillRate;
+
+    [SerializeField]
     private float m_indicatorRotateSpeed;
+
+    [Header("UI")]
+
+    #region UI
+
+    [SerializeField]
+    private Image m_curEnergyImage;
+
+    #endregion
+
 
     [Header("Component")]
 
@@ -58,6 +78,16 @@ public class PlayerController : MonoBehaviour
 
     #endregion
 
+    private void OnEnable()
+    {
+        RegisterEvent();
+    }
+
+    private void OnDisable()
+    {
+        UnregisterEvent();
+    }
+
     // Start is called before the first frame update
     void Start()
     {
@@ -69,12 +99,12 @@ public class PlayerController : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            ChangePlayerState(PlayerState.Dig);
+            CurPlayerState = PlayerState.Dig;
         }
 
         if (Input.GetKeyUp(KeyCode.Space))
         {
-            ChangePlayerState(PlayerState.Walk);
+            CurPlayerState = PlayerState.Walk;
         }
 
         switch (CurPlayerState)
@@ -82,15 +112,40 @@ public class PlayerController : MonoBehaviour
             case PlayerState.Walk:
                 var walkVec = new Vector3(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
                 Walk(walkVec);
+
+                RefillEnergy();
                 break;
             case PlayerState.Dig:
+                if (m_curEnergy <= 0)
+                {
+                    CurPlayerState = PlayerState.Walk;
+                }
+
                 var direction = (m_digDirection.position - transform.position).normalized;
                 RotateIndicatorByKeyboard();
                 Dig(direction);
+
+                ComsumeEnergy();
                 break;                
         }
 
 
+    }
+
+    void RegisterEvent()
+    {
+        EventEmitter.Add(GameEvent.LevelStart, OnLevelStart);
+    }
+
+    void UnregisterEvent()
+    {
+        EventEmitter.Remove(GameEvent.LevelStart, OnLevelStart);
+    }
+
+    void OnLevelStart(IEvent @event)
+    {
+        var initPlayerPos = LevelManager.instance.GetInitPlayerPos();
+        PlayerReset(initPlayerPos);
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
@@ -106,31 +161,35 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    void PlayerReset(Vector3 initPos)
+    {
+        transform.position = initPos;
+        m_curEnergy = m_maxEnergy;
+    }
+
     void PlayerStateInitialize(PlayerState newState)
     {
-        var curState = m_curPlayerState;
+        if (m_curPlayerState == newState)
+            return;
 
-        switch (curState)
+        switch (m_curPlayerState)
         {
             case PlayerState.Walk:
                 break;
             case PlayerState.Dig:
-                ResetDigIndicator();
+                DigIndicatorActiveToggle(false);
                 break;
         }
 
         switch (newState)
         {
             case PlayerState.Walk:
-                DigIndicatorActiveToggle(false);
-
                 gameObject.layer = LayerMask.NameToLayer("Player_Normal");
                 m_renderer.sortingLayerName = "ForeGround";
                 m_digHoleParticle.SetActive(false);
                 break;
             case PlayerState.Dig:
                 DigIndicatorActiveToggle(true);
-
                 gameObject.layer = LayerMask.NameToLayer("Player_Sneak");
                 m_renderer.sortingLayerName = "InGround";
                 m_digHoleParticle.SetActive(true);
@@ -138,22 +197,6 @@ public class PlayerController : MonoBehaviour
         }
 
         m_curPlayerState = newState;
-    }
-
-    public void ChangePlayerState(PlayerState newState)
-    {
-        switch(newState)
-        {
-            case PlayerState.Walk:
-                DigIndicatorActiveToggle(false);
-                break;
-            case PlayerState.Dig:
-                m_digIndicator.Rotate(0, 0, 0);
-                DigIndicatorActiveToggle(true);
-                break;
-        }
-
-        CurPlayerState = newState;
     }
 
     void RotateIndicatorByKeyboard()
@@ -183,11 +226,6 @@ public class PlayerController : MonoBehaviour
     void DigIndicatorActiveToggle(bool isActive)
     {
         m_digIndicator.gameObject.SetActive(isActive);
-    }
-
-    void ResetDigIndicator()
-    {
-        DigIndicatorActiveToggle(false);
         m_digIndicator.rotation = Quaternion.Euler(0, 0, 0);
     }
 
@@ -199,5 +237,21 @@ public class PlayerController : MonoBehaviour
     void Dig(Vector3 digVec)
     {
         m_rigid.velocity = digVec * m_digSpeed;
+    }
+
+    void ComsumeEnergy()
+    {
+        m_curEnergy -= (m_energyConsumeRate * Time.deltaTime);
+
+        m_curEnergy = Mathf.Max(0, m_curEnergy);
+        m_curEnergyImage.fillAmount = m_curEnergy / m_maxEnergy;
+    }
+
+    void RefillEnergy()
+    {
+        m_curEnergy += (m_energyRefillRate * Time.deltaTime);
+
+        m_curEnergy = Mathf.Min(m_curEnergy, m_maxEnergy);
+        m_curEnergyImage.fillAmount = m_curEnergy / m_maxEnergy;
     }
 }

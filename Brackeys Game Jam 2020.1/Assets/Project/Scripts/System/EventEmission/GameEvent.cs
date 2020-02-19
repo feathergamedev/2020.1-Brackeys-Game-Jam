@@ -4,13 +4,10 @@ public enum GameEvent
 {
     None,
     AppOpen,
-    LoadHomeMenu,
     GameInitialize,
     LevelStart,
-    LevelReload,
     LevelComplete,
-    GamePause,
-    GameResume,
+    LevelFail,
 }
 
 public class IntEvent : IEvent
