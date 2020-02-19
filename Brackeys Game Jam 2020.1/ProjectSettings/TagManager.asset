@@ -13,12 +13,12 @@ TagManager:
   - UI
   - 
   - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
+  - Player_Normal
+  - Player_Sneak
+  - Obstacle
+  - Mechanic
+  - Enemy
+  - Boundary
   - 
   - 
   - 
@@ -41,6 +41,15 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
-  - name: Trail
-    uniqueID: 1877964703
+  - name: Background
+    uniqueID: 3573365465
+    locked: 0
+  - name: InGround
+    uniqueID: 45710201
+    locked: 0
+  - name: ForeGround
+    uniqueID: 1870524237
+    locked: 0
+  - name: UI
+    uniqueID: 959334091
     locked: 0

@@ -10,7 +10,20 @@ public enum PlayerState
 
 public class PlayerController : MonoBehaviour
 {
-    public PlayerState CurPlayerState;
+
+    private PlayerState m_curPlayerState;
+
+    public PlayerState CurPlayerState
+    {
+        get
+        {
+            return m_curPlayerState;
+        }
+        set
+        {
+            PlayerStateInitialize(value);
+        }
+    }
 
     [Header("Walk")]
 
@@ -40,12 +53,15 @@ public class PlayerController : MonoBehaviour
     [SerializeField]
     private Transform m_digDirection;
 
+    [SerializeField]
+    private GameObject m_digHoleParticle;
+
     #endregion
 
     // Start is called before the first frame update
     void Start()
     {
-        
+        CurPlayerState = PlayerState.Walk;
     }
 
     // Update is called once per frame
@@ -75,6 +91,53 @@ public class PlayerController : MonoBehaviour
         }
 
 
+    }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.gameObject.layer == LayerMask.NameToLayer("Mechanic"))
+        {
+            var mechanic = collision.gameObject.GetComponent<IMechanic>();
+
+            if (mechanic == null)
+                Debug.LogError(collision.gameObject.name + " don't have IMechanic-related script!");
+
+            mechanic.Triggered();
+        }
+    }
+
+    void PlayerStateInitialize(PlayerState newState)
+    {
+        var curState = m_curPlayerState;
+
+        switch (curState)
+        {
+            case PlayerState.Walk:
+                break;
+            case PlayerState.Dig:
+                ResetDigIndicator();
+                break;
+        }
+
+        switch (newState)
+        {
+            case PlayerState.Walk:
+                DigIndicatorActiveToggle(false);
+
+                gameObject.layer = LayerMask.NameToLayer("Player_Normal");
+                m_renderer.sortingLayerName = "ForeGround";
+                m_digHoleParticle.SetActive(false);
+                break;
+            case PlayerState.Dig:
+                DigIndicatorActiveToggle(true);
+
+                gameObject.layer = LayerMask.NameToLayer("Player_Sneak");
+                m_renderer.sortingLayerName = "InGround";
+                m_digHoleParticle.SetActive(true);
+                break;
+        }
+
+        m_curPlayerState = newState;
     }
 
     public void ChangePlayerState(PlayerState newState)
@@ -120,6 +183,12 @@ public class PlayerController : MonoBehaviour
     void DigIndicatorActiveToggle(bool isActive)
     {
         m_digIndicator.gameObject.SetActive(isActive);
+    }
+
+    void ResetDigIndicator()
+    {
+        DigIndicatorActiveToggle(false);
+        m_digIndicator.rotation = Quaternion.Euler(0, 0, 0);
     }
 
     void Walk(Vector3 moveVec)
