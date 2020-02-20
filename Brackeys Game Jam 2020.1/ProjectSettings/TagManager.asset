@@ -21,7 +21,7 @@ TagManager:
   - Mechanic
   - Enemy
   - Boundary
-  - CameraControl
+  - ViewSensor
   - 
   - 
   - 

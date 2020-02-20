@@ -188,6 +188,15 @@ public class PlayerController : MonoBehaviour
                 Debug.Log(CurPlayerState + ", " + collision.gameObject.tag);
             }
         }
+        else if (collision.gameObject.layer == LayerMask.NameToLayer("ViewSensor"))
+        {
+            var sensor = collision.gameObject.GetComponent<LevelViewSensor>();
+
+            if (sensor == null)
+                Debug.LogError(collision.gameObject.name + " don't have ViewSensor script!");
+
+            sensor.TriggerSensor();
+        }
     }
 
     public void GetCaught()
