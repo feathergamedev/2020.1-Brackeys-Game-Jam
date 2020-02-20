@@ -35,7 +35,7 @@ public class LevelManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        LoadLevel(0);
+        EnterLevel(0);
     }
 
     // Update is called once per frame
@@ -47,47 +47,54 @@ public class LevelManager : MonoBehaviour
     void RegisterEvent()
     {
         EventEmitter.Add(GameEvent.LevelComplete, OnLevelComplete);
-        EventEmitter.Add(GameEvent.LevelFail, OnLevelFail);
     }
 
     void UnRegisterEvent()
     {
         EventEmitter.Remove(GameEvent.LevelComplete, OnLevelComplete);
-        EventEmitter.Remove(GameEvent.LevelFail, OnLevelFail);
     }
 
     void OnLevelComplete(IEvent @event)
     {
+        LevelViewManager.instance.ResetLevelView();
+
         if (m_curLevelID+1 >= m_allLevels.Count)
         {
             Debug.LogError("No more level.");
-            LoadLevel(0);
+            EnterLevel(0);
         }
         else
         {
-            LoadLevel(m_curLevelID + 1);
+            EnterLevel(m_curLevelID + 1);
         }
     }
 
-    void OnLevelFail(IEvent @event)
+    public void LevelRestart()
     {
-        LoadLevel(m_curLevelID);
+        CreateLevel(m_curLevelID);
+        LevelViewManager.instance.ResetLevelView(true);
     }
 
-    void LoadLevel(int levelID)
+    public void EnterLevel(int levelID)
+    {
+        CreateLevel(levelID);
+        LevelViewManager.instance.ResetLevelView(false);
+    }
+
+    void CreateLevel(int levelID)
     {
         if (m_curLevelObject)
             Destroy(m_curLevelObject);
 
         m_curLevelObject = Instantiate(m_allLevels[levelID], Vector3.zero, Quaternion.identity, transform);
-        m_curLevelID = levelID;
+        m_curLevelObject.transform.localPosition = Vector3.zero;
 
-        EventEmitter.Emit(GameEvent.LevelStart);
+        m_curLevelID = levelID;
     }
 
     public Vector3 GetInitPlayerPos()
     {
-        return m_initPlayerPos.position;
+        return m_initPlayerPos.localPosition;
     }
 
 }

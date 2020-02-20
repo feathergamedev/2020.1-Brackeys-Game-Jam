@@ -23,15 +23,8 @@ public class LevelViewManager : MonoBehaviour
     [SerializeField]
     private RectTransform m_levelCanvas;
 
-    private void OnEnable()
-    {
-        RegisterEvent();
-    }
-
-    private void OnDisable()
-    {
-        UnregisterEvent();
-    }
+    [SerializeField]
+    private float m_smoothScrollTime;
 
     // Start is called before the first frame update
     void Start()
@@ -45,31 +38,33 @@ public class LevelViewManager : MonoBehaviour
         
     }
 
-    void RegisterEvent()
+    public void ResetLevelView(bool isSmooth = false)
     {
-        EventEmitter.Add(GameEvent.LevelComplete, OnLevelComplete);
-        EventEmitter.Add(GameEvent.LevelFail, OnLevelFail);
+        StartCoroutine(ResetLevelViewSequence(isSmooth));
     }
 
-    void UnregisterEvent()
+    IEnumerator ResetLevelViewSequence(bool isSmooth)
     {
-        EventEmitter.Add(GameEvent.LevelComplete, OnLevelComplete);
-        EventEmitter.Remove(GameEvent.LevelFail, OnLevelFail);
-    }
+        if (isSmooth)
+        {
+            var scrollTime = m_smoothScrollTime;
 
-    void OnLevelComplete(IEvent @event)
-    {
-        ResetLevelView();
-    }
+            if (m_levelCanvas.transform.position == Vector3.zero)
+            {
+                scrollTime = 0f;
+            }
 
-    void OnLevelFail(IEvent @event)
-    {
-        ResetLevelView();
-    }
+            m_levelCanvas.transform.DOMove(Vector3.zero, scrollTime);
+            yield return new WaitForSeconds(scrollTime + 0.2f);
+        }
+        else
+        {
+            m_levelCanvas.localPosition = Vector3.zero;
+        }
 
-    public void ResetLevelView()
-    {
-        m_levelCanvas.localPosition = Vector3.zero;
+        EventEmitter.Emit(GameEvent.LevelStart);
+
+        yield return null;
     }
 
     public void ChangeLevelView(LevelViewSensor sensor)
@@ -82,4 +77,5 @@ public class LevelViewManager : MonoBehaviour
 
         m_levelCanvas.DOLocalMoveY(newPos.y, m_scrollTime).SetEase(m_scrollEase);
     }
+
 }

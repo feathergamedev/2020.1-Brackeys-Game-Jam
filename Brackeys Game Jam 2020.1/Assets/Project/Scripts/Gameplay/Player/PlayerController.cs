@@ -9,6 +9,7 @@ public enum PlayerState
     Prepare,
     Walk,
     Dig,
+    Die,
 }
 
 public class PlayerController : MonoBehaviour
@@ -68,6 +69,11 @@ public class PlayerController : MonoBehaviour
 
     #endregion
 
+    [Header("Juicy")]
+
+    [SerializeField]
+    private GameObject m_dieParticle;
+
 
     [Header("Component")]
 
@@ -78,6 +84,9 @@ public class PlayerController : MonoBehaviour
 
     [SerializeField]
     SpriteRenderer m_renderer;
+
+    [SerializeField]
+    Collider2D m_collider;
 
     [SerializeField]
     private Transform m_digIndicator;
@@ -114,14 +123,21 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (CurPlayerState != PlayerState.Die)
         {
-            CurPlayerState = PlayerState.Dig;
-        }
+            if (Input.GetKeyDown(KeyCode.Space))
+            {
+                CurPlayerState = PlayerState.Dig;
+                m_collider.enabled = false;
+                m_collider.enabled = true;
+            }
 
-        if (Input.GetKeyUp(KeyCode.Space))
-        {
-            CurPlayerState = PlayerState.Walk;
+            if (Input.GetKeyUp(KeyCode.Space))
+            {
+                CurPlayerState = PlayerState.Walk;
+                m_collider.enabled = false;
+                m_collider.enabled = true;
+            }
         }
 
         switch (CurPlayerState)
@@ -147,6 +163,7 @@ public class PlayerController : MonoBehaviour
                 Dig(direction);
 
                 ComsumeEnergy();
+
                 break;                
         }
 
@@ -156,11 +173,13 @@ public class PlayerController : MonoBehaviour
     void RegisterEvent()
     {
         EventEmitter.Add(GameEvent.LevelStart, OnLevelStart);
+        EventEmitter.Add(GameEvent.LevelFail, OnLevelFail);
     }
 
     void UnregisterEvent()
     {
         EventEmitter.Remove(GameEvent.LevelStart, OnLevelStart);
+        EventEmitter.Remove(GameEvent.LevelFail, OnLevelFail);
     }
 
     void OnLevelStart(IEvent @event)
@@ -169,10 +188,35 @@ public class PlayerController : MonoBehaviour
         PlayerReset(initPlayerPos);
     }
 
+    void OnLevelFail(IEvent @event)
+    {
+        StartCoroutine(LevelFailPerform());
+    }
+
+    IEnumerator LevelFailPerform()
+    {
+        m_rigid.velocity = Vector2.zero;
+        CurPlayerState = PlayerState.Die;
+        m_collider.enabled = false;
+
+        m_renderer.DOColor(new Color(255, 255, 255, 0), 1.0f).SetEase(Ease.Linear);
+
+        m_dieParticle.SetActive(true);
+
+        yield return new WaitForSeconds(1.0f);
+
+        m_dieParticle.SetActive(false);
+        LevelManager.instance.LevelRestart();
+        yield return null;        
+    }
+
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.gameObject.layer == LayerMask.NameToLayer("Mechanic"))
         {
+            if (CurPlayerState == PlayerState.Die)
+                return;
+
             var mechanic = collision.gameObject.GetComponent<IMechanic>();
 
             if (mechanic == null)
@@ -211,8 +255,32 @@ public class PlayerController : MonoBehaviour
 
     void PlayerReset(Vector3 initPos)
     {
-        transform.position = initPos;
+        StartCoroutine(PlayerResetSequence(initPos));
+    }
+
+    IEnumerator PlayerResetSequence(Vector3 initPos)
+    {
+        //Component
+        transform.localPosition = initPos;
+        transform.localScale = Vector3.zero;
+
+        //Gameplay
         m_curEnergy = m_maxEnergy;
+
+        //Juicy
+        m_dieParticle.SetActive(false);
+        m_digHoleParticle.SetActive(false);
+
+        var transistTime = 0.5f;
+        var transistEase = Ease.InSine;
+        transform.DOScale(new Vector3(100, 100, 100), transistTime).SetEase(transistEase);
+        m_renderer.DOColor(new Color32(255, 255, 255, 255), transistTime).SetEase(transistEase);
+
+        yield return new WaitForSeconds(transistTime + 0.2f);
+
+        CurPlayerState = PlayerState.Walk;
+        m_collider.enabled = true;
+
     }
 
     void PlayerStateInitialize(PlayerState newState)
@@ -226,6 +294,7 @@ public class PlayerController : MonoBehaviour
                 break;
             case PlayerState.Dig:
                 DigIndicatorActiveToggle(false);
+                AudioManager.instance.StopSoundEffect(SoundEffectType.DigHole);
                 break;
         }
 
@@ -241,6 +310,8 @@ public class PlayerController : MonoBehaviour
                 gameObject.layer = LayerMask.NameToLayer("Player_Sneak");
                 m_renderer.DOColor(m_sneakColor, 0.5f).SetEase(Ease.Linear);
                 m_digHoleParticle.SetActive(true);
+
+                AudioManager.instance.PlaySoundEffect(SoundEffectType.DigHole);
                 break;
         }
 
