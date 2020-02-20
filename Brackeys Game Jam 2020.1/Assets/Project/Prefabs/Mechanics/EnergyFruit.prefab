@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &2402031453119449489
+--- !u!1 &300129596069220859
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,37 +8,38 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 2402031453119449490}
-  - component: {fileID: 2402031453119449500}
-  - component: {fileID: 2402031453119449491}
-  m_Layer: 10
-  m_Name: Obstacle
-  m_TagString: OnGround
+  - component: {fileID: 300129596069220858}
+  - component: {fileID: 300129596069220863}
+  - component: {fileID: 300129596069220856}
+  - component: {fileID: 300129596069220857}
+  m_Layer: 11
+  m_Name: EnergyFruit
+  m_TagString: InGround
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &2402031453119449490
+--- !u!4 &300129596069220858
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2402031453119449489}
+  m_GameObject: {fileID: 300129596069220859}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 500, y: 100, z: 100}
+  m_LocalPosition: {x: 634, y: -33, z: 0}
+  m_LocalScale: {x: 80, y: 80, z: 80}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!212 &2402031453119449500
+--- !u!212 &300129596069220863
 SpriteRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2402031453119449489}
+  m_GameObject: {fileID: 300129596069220859}
   m_Enabled: 1
   m_CastShadows: 0
   m_ReceiveShadows: 0
@@ -69,8 +70,8 @@ SpriteRenderer:
   m_SortingLayerID: 1870524237
   m_SortingLayer: 2
   m_SortingOrder: 0
-  m_Sprite: {fileID: 21300000, guid: ded71d873997422478801858c6361e51, type: 3}
-  m_Color: {r: 0.18067853, g: 0.1504539, b: 0.21698111, a: 1}
+  m_Sprite: {fileID: 21300000, guid: 9d3ab89d0b1c3f847bc81c3c4c6681b2, type: 3}
+  m_Color: {r: 0.5254902, g: 0.60784316, b: 1, a: 0.60784316}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -80,29 +81,31 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!61 &2402031453119449491
-BoxCollider2D:
+--- !u!58 &300129596069220856
+CircleCollider2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2402031453119449489}
+  m_GameObject: {fileID: 300129596069220859}
   m_Enabled: 1
   m_Density: 1
   m_Material: {fileID: 0}
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_UsedByEffector: 0
   m_UsedByComposite: 0
   m_Offset: {x: 0, y: 0}
-  m_SpriteTilingProperty:
-    border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 1, y: 1}
-    newSize: {x: 1, y: 1}
-    adaptiveTilingThreshold: 0.5
-    drawMode: 0
-    adaptiveTiling: 0
-  m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 1, y: 1}
-  m_EdgeRadius: 0
+  m_Radius: 0.49999997
+--- !u!114 &300129596069220857
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 300129596069220859}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b1547288287ef4e48a12b214f71b059f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

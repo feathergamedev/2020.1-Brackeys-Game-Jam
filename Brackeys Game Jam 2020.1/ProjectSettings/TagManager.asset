@@ -3,7 +3,9 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 2
-  tags: []
+  tags:
+  - OnGround
+  - InGround
   layers:
   - Default
   - TransparentFX
@@ -42,13 +44,13 @@ TagManager:
     uniqueID: 0
     locked: 0
   - name: Background
-    uniqueID: 3573365465
-    locked: 0
-  - name: InGround
     uniqueID: 45710201
     locked: 0
   - name: ForeGround
     uniqueID: 1870524237
+    locked: 0
+  - name: Player
+    uniqueID: 1848116291
     locked: 0
   - name: UI
     uniqueID: 959334091

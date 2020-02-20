@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using DG.Tweening;
 
 public enum PlayerState
 {
@@ -12,6 +13,8 @@ public enum PlayerState
 
 public class PlayerController : MonoBehaviour
 {
+    public static PlayerController instance;
+
     [SerializeField]
     private PlayerState m_curPlayerState;
 
@@ -27,14 +30,21 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    [Header("Walk")]
+    [Header("Speed")]
 
     [SerializeField]
     private float m_walkSpeed;
 
-    [Header("Dig")]
     [SerializeField]
     private float m_digSpeed;
+
+    [SerializeField]
+    private float m_indicatorRotateSpeed;
+
+    [SerializeField]
+    private float m_axisMovementTransistTime;
+
+    [Header("Energy")]
 
     [SerializeField]
     private float m_maxEnergy;
@@ -44,8 +54,10 @@ public class PlayerController : MonoBehaviour
     [SerializeField]
     private float m_energyConsumeRate, m_energyRefillRate;
 
+    [Header("Color")]
+
     [SerializeField]
-    private float m_indicatorRotateSpeed;
+    private Color m_normalColor, m_sneakColor;
 
     [Header("UI")]
 
@@ -88,6 +100,11 @@ public class PlayerController : MonoBehaviour
         UnregisterEvent();
     }
 
+    private void Awake()
+    {
+        instance = this;
+    }
+
     // Start is called before the first frame update
     void Start()
     {
@@ -122,7 +139,11 @@ public class PlayerController : MonoBehaviour
                 }
 
                 var direction = (m_digDirection.position - transform.position).normalized;
-                RotateIndicatorByKeyboard();
+
+                //RotateIndicatorByKeyboard();
+                //RotateIndicatorByMouse();
+                RotateIndicatorByAxisMovement();
+
                 Dig(direction);
 
                 ComsumeEnergy();
@@ -157,8 +178,26 @@ public class PlayerController : MonoBehaviour
             if (mechanic == null)
                 Debug.LogError(collision.gameObject.name + " don't have IMechanic-related script!");
 
-            mechanic.Triggered();
+            var canTrigger = ((CurPlayerState == PlayerState.Walk) && (collision.gameObject.tag == "OnGround"))
+                            || ((CurPlayerState == PlayerState.Dig) && (collision.gameObject.tag == "InGround"));
+
+            if (canTrigger)
+                mechanic.Triggered();
+            else
+            {
+                Debug.Log(CurPlayerState + ", " + collision.gameObject.tag);
+            }
         }
+    }
+
+    public void GetCaught()
+    {
+        if (CurPlayerState == PlayerState.Dig)
+            return;
+
+        //TODO: perform
+
+        EventEmitter.Emit(GameEvent.LevelFail);
     }
 
     void PlayerReset(Vector3 initPos)
@@ -185,18 +224,58 @@ public class PlayerController : MonoBehaviour
         {
             case PlayerState.Walk:
                 gameObject.layer = LayerMask.NameToLayer("Player_Normal");
-                m_renderer.sortingLayerName = "ForeGround";
+                m_renderer.DOColor(m_normalColor, 0.5f).SetEase(Ease.Linear);
                 m_digHoleParticle.SetActive(false);
                 break;
             case PlayerState.Dig:
                 DigIndicatorActiveToggle(true);
                 gameObject.layer = LayerMask.NameToLayer("Player_Sneak");
-                m_renderer.sortingLayerName = "InGround";
+                m_renderer.DOColor(m_sneakColor, 0.5f).SetEase(Ease.Linear);
                 m_digHoleParticle.SetActive(true);
                 break;
         }
 
         m_curPlayerState = newState;
+    }
+
+    void RotateIndicatorByAxisMovement()
+    {
+        var angle = m_digIndicator.rotation.eulerAngles.z;
+
+        if (Input.GetAxisRaw("Horizontal") == 1)
+        {
+            if (Input.GetAxisRaw("Vertical") == -1)
+                angle = -135f;
+            else if (Input.GetAxisRaw("Vertical") == 1)
+                angle = -45f;
+            else if (Input.GetAxisRaw("Vertical") == 0)
+                angle = -90f;
+        }
+        else if (Input.GetAxisRaw("Horizontal") == -1)
+        {
+            if (Input.GetAxisRaw("Vertical") == -1)
+                angle = 135f;
+            else if (Input.GetAxisRaw("Vertical") == 1)
+                angle = 45f;
+            else if (Input.GetAxisRaw("Vertical") == 0)
+                angle = 90f;
+        }
+        else
+        {
+            if (Input.GetAxisRaw("Vertical") == -1)
+                angle = -180f;
+            else if (Input.GetAxisRaw("Vertical") == 1)
+                angle = 0f;
+            else if (Input.GetAxisRaw("Vertical") == 0)
+            {
+                //Do nothing
+            }
+        }
+
+        var newEuler = Quaternion.Euler(0, 0, angle);
+        m_digIndicator.transform.DORotateQuaternion(newEuler, m_axisMovementTransistTime).SetEase(Ease.Linear);
+
+        //m_digIndicator.transform.rotation
     }
 
     void RotateIndicatorByKeyboard()
@@ -253,5 +332,13 @@ public class PlayerController : MonoBehaviour
 
         m_curEnergy = Mathf.Min(m_curEnergy, m_maxEnergy);
         m_curEnergyImage.fillAmount = m_curEnergy / m_maxEnergy;
+    }
+
+    public void RefillAllEnergy()
+    {
+        m_curEnergy = m_maxEnergy;
+        m_curEnergyImage.fillAmount = m_curEnergy / m_maxEnergy;
+
+        //TODO: Sound Effect.
     }
 }
