@@ -35,7 +35,7 @@ public class LevelManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        EnterLevel(0);
+        EnterLevel(0, false);
     }
 
     // Update is called once per frame
@@ -56,18 +56,28 @@ public class LevelManager : MonoBehaviour
 
     void OnLevelComplete(IEvent @event)
     {
-        LevelViewManager.instance.ResetLevelView();
+        StartCoroutine(LevelCompleteSequence());
+    }
 
-        if (m_curLevelID+1 >= m_allLevels.Count)
+    IEnumerator LevelCompleteSequence()
+    {
+        AudioManager.instance.PlaySoundEffect(SoundEffectType.LevelComplete);
+
+        yield return new WaitForSeconds(1.0f);
+
+        LevelViewManager.instance.ResetLevelView(true);
+
+        if (m_curLevelID + 1 >= m_allLevels.Count)
         {
             Debug.LogError("No more level.");
-            EnterLevel(0);
+            EnterLevel(0, true);
         }
         else
         {
-            EnterLevel(m_curLevelID + 1);
+            EnterLevel(m_curLevelID + 1, true);
         }
     }
+
 
     public void LevelRestart()
     {
@@ -75,10 +85,10 @@ public class LevelManager : MonoBehaviour
         LevelViewManager.instance.ResetLevelView(true);
     }
 
-    public void EnterLevel(int levelID)
+    public void EnterLevel(int levelID, bool smoothScroll = false)
     {
         CreateLevel(levelID);
-        LevelViewManager.instance.ResetLevelView(false);
+        LevelViewManager.instance.ResetLevelView(smoothScroll);
     }
 
     void CreateLevel(int levelID)

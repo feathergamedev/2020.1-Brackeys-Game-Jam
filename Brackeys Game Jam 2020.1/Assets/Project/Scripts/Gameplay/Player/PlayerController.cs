@@ -6,10 +6,9 @@ using DG.Tweening;
 
 public enum PlayerState
 {
-    Prepare,
+    Freeze,
     Walk,
     Dig,
-    Die,
 }
 
 public class PlayerController : MonoBehaviour
@@ -123,7 +122,7 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (CurPlayerState != PlayerState.Die)
+        if (CurPlayerState != PlayerState.Freeze)
         {
             if (Input.GetKeyDown(KeyCode.Space))
             {
@@ -134,9 +133,10 @@ public class PlayerController : MonoBehaviour
 
             if (Input.GetKeyUp(KeyCode.Space))
             {
-                CurPlayerState = PlayerState.Walk;
-                m_collider.enabled = false;
-                m_collider.enabled = true;
+                if (CurPlayerState == PlayerState.Dig)
+                {
+                    StartCoroutine(BackToGroundPerform());
+                }
             }
         }
 
@@ -151,7 +151,7 @@ public class PlayerController : MonoBehaviour
             case PlayerState.Dig:
                 if (m_curEnergy <= 0)
                 {
-                    CurPlayerState = PlayerState.Walk;
+                    StartCoroutine(BackToGroundPerform());
                 }
 
                 var direction = (m_digDirection.position - transform.position).normalized;
@@ -174,12 +174,14 @@ public class PlayerController : MonoBehaviour
     {
         EventEmitter.Add(GameEvent.LevelStart, OnLevelStart);
         EventEmitter.Add(GameEvent.LevelFail, OnLevelFail);
+        EventEmitter.Add(GameEvent.LevelComplete, OnLevelComplete);
     }
 
     void UnregisterEvent()
     {
         EventEmitter.Remove(GameEvent.LevelStart, OnLevelStart);
         EventEmitter.Remove(GameEvent.LevelFail, OnLevelFail);
+        EventEmitter.Remove(GameEvent.LevelComplete, OnLevelComplete);
     }
 
     void OnLevelStart(IEvent @event)
@@ -193,10 +195,18 @@ public class PlayerController : MonoBehaviour
         StartCoroutine(LevelFailPerform());
     }
 
+    void OnLevelComplete(IEvent @event)
+    {
+        CurPlayerState = PlayerState.Freeze;
+        m_collider.enabled = false;
+        m_renderer.DOColor(new Color(255, 255, 255, 0), 1.0f).SetEase(Ease.Linear);
+    }
+
     IEnumerator LevelFailPerform()
     {
-        m_rigid.velocity = Vector2.zero;
-        CurPlayerState = PlayerState.Die;
+        AudioManager.instance.PlaySoundEffect(SoundEffectType.PlayerDie);
+
+        CurPlayerState = PlayerState.Freeze;
         m_collider.enabled = false;
 
         m_renderer.DOColor(new Color(255, 255, 255, 0), 1.0f).SetEase(Ease.Linear);
@@ -210,11 +220,31 @@ public class PlayerController : MonoBehaviour
         yield return null;        
     }
 
+    IEnumerator BackToGroundPerform()
+    {
+        CurPlayerState = PlayerState.Freeze;
+
+        DigIndicatorActiveToggle(false);
+        AudioManager.instance.StopSoundEffect(SoundEffectType.DigHole);
+        AudioManager.instance.PlaySoundEffect(SoundEffectType.BackToGround);
+
+        m_renderer.DOColor(m_normalColor, 0.6f).SetEase(Ease.Linear);
+        m_digHoleParticle.SetActive(false);
+
+        yield return new WaitForSeconds(0.63f);
+
+        CurPlayerState = PlayerState.Walk;
+        gameObject.layer = LayerMask.NameToLayer("Player_Normal");
+
+        m_collider.enabled = false;
+        m_collider.enabled = true;
+    }
+
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.gameObject.layer == LayerMask.NameToLayer("Mechanic"))
         {
-            if (CurPlayerState == PlayerState.Die)
+            if (CurPlayerState == PlayerState.Freeze)
                 return;
 
             var mechanic = collision.gameObject.GetComponent<IMechanic>();
@@ -293,17 +323,12 @@ public class PlayerController : MonoBehaviour
             case PlayerState.Walk:
                 break;
             case PlayerState.Dig:
-                DigIndicatorActiveToggle(false);
-                AudioManager.instance.StopSoundEffect(SoundEffectType.DigHole);
                 break;
         }
 
         switch (newState)
         {
             case PlayerState.Walk:
-                gameObject.layer = LayerMask.NameToLayer("Player_Normal");
-                m_renderer.DOColor(m_normalColor, 0.5f).SetEase(Ease.Linear);
-                m_digHoleParticle.SetActive(false);
                 break;
             case PlayerState.Dig:
                 DigIndicatorActiveToggle(true);
@@ -312,6 +337,9 @@ public class PlayerController : MonoBehaviour
                 m_digHoleParticle.SetActive(true);
 
                 AudioManager.instance.PlaySoundEffect(SoundEffectType.DigHole);
+                break;
+            case PlayerState.Freeze:
+                m_rigid.velocity = Vector2.zero;
                 break;
         }
 

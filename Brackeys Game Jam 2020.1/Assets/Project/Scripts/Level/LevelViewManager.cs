@@ -55,7 +55,9 @@ public class LevelViewManager : MonoBehaviour
             }
 
             m_levelCanvas.transform.DOMove(Vector3.zero, scrollTime);
-            yield return new WaitForSeconds(scrollTime + 0.2f);
+
+            if (scrollTime != 0f)
+                yield return new WaitForSeconds(scrollTime + 0.2f);
         }
         else
         {
