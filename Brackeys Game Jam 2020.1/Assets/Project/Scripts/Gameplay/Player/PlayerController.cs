@@ -74,8 +74,7 @@ public class PlayerController : MonoBehaviour
     private GameObject m_dieParticle;
 
     [SerializeField]
-    private ParticleSystem m_digTrail;
-
+    private ParticleSystem m_digHoleParticle;
 
     [Header("Component")]
 
@@ -98,9 +97,6 @@ public class PlayerController : MonoBehaviour
 
     [SerializeField]
     private Transform m_digDirection;
-
-    [SerializeField]
-    private GameObject m_digHoleParticle;
 
     #endregion
 
@@ -271,17 +267,18 @@ public class PlayerController : MonoBehaviour
         AudioManager.instance.StopSoundEffect(SoundEffectType.DigHole);
         AudioManager.instance.PlaySoundEffect(SoundEffectType.BackToGround);
 
-        m_renderer.DOColor(m_normalColor, 0.1f).SetEase(Ease.Linear);
-        m_digHoleParticle.SetActive(false);
-
-        //回到地面的僵直時間
-//        yield return new WaitForSeconds(0.22f);
+        m_digHoleParticle.Stop();
 
         CurPlayerState = PlayerState.Walk;
         gameObject.layer = LayerMask.NameToLayer("Player_Normal");
 
         m_collider.enabled = false;
         m_collider.enabled = true;
+
+        yield return new WaitForSeconds(0.12f);
+
+        m_renderer.DOColor(m_normalColor, 0.1f).SetEase(Ease.Linear);
+        m_renderer.transform.DORotateQuaternion(Quaternion.Euler(0, 0, 0), 0.1f).SetEase(Ease.Linear);
 
         yield return null;
     }
@@ -343,6 +340,8 @@ public class PlayerController : MonoBehaviour
         transform.localPosition = initPos;
         transform.localScale = Vector3.zero;
         transform.localRotation = Quaternion.Euler(0, 0, 0);
+        m_renderer.transform.localRotation = Quaternion.Euler(0, 0, 0);
+
         m_animator.SetBool("IsWalking", false);
         m_animator.SetBool("IsDigging", false);
         m_animator.SetBool("IsDead", false);
@@ -352,7 +351,7 @@ public class PlayerController : MonoBehaviour
 
         //Juicy
         m_dieParticle.SetActive(false);
-        m_digHoleParticle.SetActive(false);
+        m_digHoleParticle.Stop();
 
         var transistTime = 0.5f;
         var transistEase = Ease.InSine;
@@ -389,14 +388,12 @@ public class PlayerController : MonoBehaviour
                 DigIndicatorActiveToggle(true);
                 gameObject.layer = LayerMask.NameToLayer("Player_Sneak");
                 m_renderer.DOColor(m_sneakColor, 0.5f).SetEase(Ease.Linear);
-                m_digHoleParticle.SetActive(true);
+                m_digHoleParticle.Play();
 
                 AudioManager.instance.PlaySoundEffect(SoundEffectType.DigHole);
 
                 m_animator.SetBool("IsDigging", true);
 
-
-//                m_digTrail. = true;
                 break;
             case PlayerState.Freeze:
                 m_rigid.velocity = Vector2.zero;
@@ -437,12 +434,16 @@ public class PlayerController : MonoBehaviour
             else if (Input.GetAxisRaw("Vertical") == 0)
             {
                 //Do nothing
+                if (CurPlayerState == PlayerState.Walk)
+                    angle = 0f;
             }
         }
 
         var newEuler = Quaternion.Euler(0, 0, angle);
         m_digIndicator.transform.DORotateQuaternion(newEuler, m_axisMovementTransistTime).SetEase(Ease.Linear);
 
+        if (CurPlayerState == PlayerState.Dig)
+            m_renderer.transform.DORotateQuaternion(newEuler, m_axisMovementTransistTime).SetEase(Ease.Linear);
         //m_digIndicator.transform.rotation
     }
 
