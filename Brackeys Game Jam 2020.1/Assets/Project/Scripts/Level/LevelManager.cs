@@ -63,7 +63,11 @@ public class LevelManager : MonoBehaviour
     {
         AudioManager.instance.PlaySoundEffect(SoundEffectType.LevelComplete);
 
-        yield return new WaitForSeconds(1.0f);
+        CameraFade.instance.FadeOut();
+
+        yield return new WaitForSeconds(1.02f);
+
+        CameraFade.instance.FadeIn();
 
         LevelViewManager.instance.ResetLevelView(true);
 

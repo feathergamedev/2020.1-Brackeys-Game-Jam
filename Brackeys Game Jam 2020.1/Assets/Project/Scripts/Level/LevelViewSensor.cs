@@ -19,5 +19,6 @@ public class LevelViewSensor : MonoBehaviour
     public void TriggerSensor()
     {
         LevelViewManager.instance.ChangeLevelView(this);
+        Destroy(this.gameObject);
     }
 }

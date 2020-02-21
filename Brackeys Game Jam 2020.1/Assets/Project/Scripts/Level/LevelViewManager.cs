@@ -75,8 +75,6 @@ public class LevelViewManager : MonoBehaviour
         newPos = Camera.main.ScreenToWorldPoint(newPos);
         newPos.z = 0;
 
-        Debug.Log(newPos);
-
         m_levelCanvas.DOLocalMoveY(newPos.y, m_scrollTime).SetEase(m_scrollEase);
     }
 
