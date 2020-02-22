@@ -59,6 +59,9 @@ public class PlayerController : MonoBehaviour
     [SerializeField]
     private Color m_normalColor, m_sneakColor;
 
+    [SerializeField]
+    private float m_normalScale, m_sneakScale;
+
     [Header("UI")]
 
     #region UI
@@ -277,7 +280,6 @@ public class PlayerController : MonoBehaviour
 
         yield return new WaitForSeconds(0.12f);
 
-        m_renderer.DOColor(m_normalColor, 0.1f).SetEase(Ease.Linear);
         m_renderer.transform.DORotateQuaternion(Quaternion.Euler(0, 0, 0), 0.1f).SetEase(Ease.Linear);
 
         yield return null;
@@ -383,11 +385,18 @@ public class PlayerController : MonoBehaviour
         switch (newState)
         {
             case PlayerState.Walk:
+
+                m_renderer.DOColor(m_normalColor, 0.5f).SetEase(Ease.Linear);
+                m_renderer.transform.DOScale(new Vector3(m_normalScale, m_normalScale, m_normalScale), 0.5f).SetEase(Ease.Linear);
+
                 break;
             case PlayerState.Dig:
                 DigIndicatorActiveToggle(true);
                 gameObject.layer = LayerMask.NameToLayer("Player_Sneak");
+
                 m_renderer.DOColor(m_sneakColor, 0.5f).SetEase(Ease.Linear);
+                m_renderer.transform.DOScale(new Vector3(m_sneakScale, m_sneakScale, m_sneakScale), 0.5f).SetEase(Ease.Linear);
+
                 m_digHoleParticle.Play();
 
                 AudioManager.instance.PlaySoundEffect(SoundEffectType.DigHole);

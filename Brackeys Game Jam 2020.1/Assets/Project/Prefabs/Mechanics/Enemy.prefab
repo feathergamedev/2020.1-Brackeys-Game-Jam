@@ -191,7 +191,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_detectArea: {fileID: 2141309100396538059}
-  m_rotateTime: 1
+  m_rotateTime: 0.6
 --- !u!1 &6143398975730260652
 GameObject:
   m_ObjectHideFlags: 0
