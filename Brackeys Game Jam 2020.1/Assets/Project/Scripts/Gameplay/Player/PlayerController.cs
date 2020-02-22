@@ -127,7 +127,7 @@ public class PlayerController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        CurPlayerState = PlayerState.Walk;
+
     }
 
     // Update is called once per frame
@@ -166,6 +166,11 @@ public class PlayerController : MonoBehaviour
                     m_animator.SetBool("IsWalking", true);
 
                 RotateIndicatorByAxisMovement();
+
+                if (AudioManager.instance.IsPlaying(SoundEffectType.DigHole))
+                {
+                    AudioManager.instance.StopSoundEffect(SoundEffectType.DigHole);
+                }
 
                 break;
             case PlayerState.Dig:
@@ -307,7 +312,7 @@ public class PlayerController : MonoBehaviour
                 mechanic.Triggered();
             else
             {
-                Debug.Log(CurPlayerState + ", " + collision.gameObject.tag);
+//                Debug.Log(CurPlayerState + ", " + collision.gameObject.tag);
             }
         }
         else if (collision.gameObject.layer == LayerMask.NameToLayer("ViewSensor"))

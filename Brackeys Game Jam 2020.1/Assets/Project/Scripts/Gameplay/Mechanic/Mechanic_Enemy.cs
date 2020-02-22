@@ -69,20 +69,12 @@ public class Mechanic_Enemy : MonoBehaviour, IMechanic
 
     IEnumerator PatrolAI()
     {
-        Debug.Log("Yo!");
         while (true)
         {
-            yield return new WaitForSeconds(m_rotateTime * 2);
-            /*
-            var curRotateZ = m_detectArea.gameObject.transform.rotation.eulerAngles.z;
-            var nextRotation = Quaternion.Euler(0, 0, curRotateZ - 90f);
-            //            m_detectArea.gameObject.transform.DORotateQuaternion(nextRotation, m_rotateTime);
-            transform.DORotateQuaternion(nextRotation, m_rotateTime);
-            */
+            yield return new WaitForSeconds(m_rotateTime * 1.5f);
 
             var curRotateZ = transform.rotation.eulerAngles.z;
             var nextRotation = Quaternion.Euler(0, 0, curRotateZ - 90f);
-            Debug.Log("Next rotation is " + nextRotation);
 
             transform.DORotateQuaternion(nextRotation, m_rotateTime);
 

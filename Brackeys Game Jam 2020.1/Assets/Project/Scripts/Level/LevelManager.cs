@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class LevelManager : MonoBehaviour
 {
@@ -67,19 +68,23 @@ public class LevelManager : MonoBehaviour
 
         yield return new WaitForSeconds(1.02f);
 
-        CameraFade.instance.FadeIn();
-
-        LevelViewManager.instance.ResetLevelView(true);
-
         if (m_curLevelID + 1 >= m_allLevels.Count)
         {
-            Debug.LogError("No more level.");
-            EnterLevel(0, true);
+            StartCoroutine(CallCreditPagePerform());
         }
         else
         {
+            CameraFade.instance.FadeIn();
+            LevelViewManager.instance.ResetLevelView(true);
             EnterLevel(m_curLevelID + 1, true);
         }
+    }
+
+    IEnumerator CallCreditPagePerform()
+    {
+        AudioManager.instance.FadeOutBGM();
+        yield return new WaitForSeconds(2.0f);
+        SceneManager.LoadScene("CreditPage");
     }
 
 

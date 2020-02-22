@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using DG.Tweening;
 
 public enum SoundEffectType
 {
@@ -20,9 +21,13 @@ public class AudioManager : MonoBehaviour
 
     private List<AudioSource> m_allSoundEffect;
 
+    [SerializeField]
+    private AudioSource m_curBGM;
+
     private void Awake()
     {
         instance = this;
+        FadeInBGM();
     }
 
     // Start is called before the first frame update
@@ -50,5 +55,20 @@ public class AudioManager : MonoBehaviour
     public void StopSoundEffect(SoundEffectType type)
     {
         m_allSoundEffect[(int)type].Stop();
+    }
+
+    public bool IsPlaying(SoundEffectType type)
+    {
+        return m_allSoundEffect[(int)type].isPlaying;
+    }
+
+    public void FadeInBGM()
+    {
+        DOTween.To(() => m_curBGM.volume, x => m_curBGM.volume = x, 0.5f, 1.0f);
+    }
+
+    public void FadeOutBGM()
+    {
+        DOTween.To(() => m_curBGM.volume, x => m_curBGM.volume = x, 0f, 1.5f);
     }
 }

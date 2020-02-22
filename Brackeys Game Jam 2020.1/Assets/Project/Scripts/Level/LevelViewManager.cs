@@ -14,6 +14,8 @@ public class LevelViewManager : MonoBehaviour
     [SerializeField]
     private Ease m_scrollEase;
 
+    private Tween m_changeViewTween;
+
     private void Awake()
     {
         if (instance == null)
@@ -71,11 +73,23 @@ public class LevelViewManager : MonoBehaviour
 
     public void ChangeLevelView(LevelViewSensor sensor)
     {
-        var newPos = sensor.m_newBottomPos.position;
-        newPos = Camera.main.ScreenToWorldPoint(newPos);
-        newPos.z = 0;
+        if (m_changeViewTween != null)
+            m_changeViewTween.Kill();
 
-        m_levelCanvas.DOLocalMoveY(newPos.y, m_scrollTime).SetEase(m_scrollEase);
+        var newPos = sensor.m_newBottomPos.position;
+//        newPos = Camera.main.ScreenToWorldPoint(newPos);
+        newPos.z = 0;
+        newPos *= 10;
+
+        Debug.Log(newPos);
+
+        m_changeViewTween = m_levelCanvas.DOLocalMoveY(-newPos.y, m_scrollTime).SetEase(m_scrollEase);
+    }
+
+    public void ChangeLevelView(float nextPosY)
+    {
+        var targetPos = m_levelCanvas.transform.localPosition.y + nextPosY;
+        m_changeViewTween = m_levelCanvas.DOLocalMoveY(targetPos, m_scrollTime).SetEase(m_scrollEase);
     }
 
 }
