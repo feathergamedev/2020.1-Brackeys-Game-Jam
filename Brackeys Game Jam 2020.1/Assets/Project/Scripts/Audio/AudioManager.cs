@@ -5,10 +5,11 @@ using DG.Tweening;
 
 public enum SoundEffectType
 {
+    PlayerWalk,
     DigHole,
     BackToGround,
     PlayerDie,
-    PlayerRevive,
+    PlayerRevive,    
     LevelComplete,
 }
 
@@ -23,6 +24,8 @@ public class AudioManager : MonoBehaviour
 
     [SerializeField]
     private AudioSource m_curBGM;
+
+    bool m_isMute;
 
     private void Awake()
     {
@@ -44,16 +47,31 @@ public class AudioManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        if (Input.GetKeyDown(KeyCode.M))
+        {
+            m_isMute = !m_isMute;
+            m_curBGM.mute = m_isMute;
+
+            foreach(AudioSource SFX in m_allSoundEffect)
+            {
+                SFX.mute = m_isMute;
+            }
+        }
     }
 
     public void PlaySoundEffect(SoundEffectType type)
     {
+        if (IsPlaying(type))
+            return;
+
         m_allSoundEffect[(int)type].Play();
     }
 
     public void StopSoundEffect(SoundEffectType type)
     {
+        if (!IsPlaying(type))
+            return;
+
         m_allSoundEffect[(int)type].Stop();
     }
 
@@ -69,6 +87,6 @@ public class AudioManager : MonoBehaviour
 
     public void FadeOutBGM()
     {
-        DOTween.To(() => m_curBGM.volume, x => m_curBGM.volume = x, 0f, 1.5f);
+        DOTween.To(() => m_curBGM.volume, x => m_curBGM.volume = x, 0f, 3.2f);
     }
 }

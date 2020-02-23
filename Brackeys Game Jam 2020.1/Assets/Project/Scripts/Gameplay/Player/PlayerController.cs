@@ -107,6 +107,8 @@ public class PlayerController : MonoBehaviour
 
     private GameObject m_finishPoint;
 
+    private Tween m_digRotateTween;
+
     #endregion
 
     private void OnEnable()
@@ -161,9 +163,15 @@ public class PlayerController : MonoBehaviour
                 RefillEnergy();
 
                 if (m_rigid.velocity == Vector2.zero)
+                {
                     m_animator.SetBool("IsWalking", false);
+                    AudioManager.instance.StopSoundEffect(SoundEffectType.PlayerWalk);
+                }
                 else
+                {
                     m_animator.SetBool("IsWalking", true);
+                    AudioManager.instance.PlaySoundEffect(SoundEffectType.PlayerWalk);
+                }
 
                 RotateIndicatorByAxisMovement();
 
@@ -174,6 +182,9 @@ public class PlayerController : MonoBehaviour
 
                 break;
             case PlayerState.Dig:
+
+                AudioManager.instance.StopSoundEffect(SoundEffectType.PlayerWalk);
+
                 if (m_curEnergy <= 0)
                 {
                     if (CurPlayerState == PlayerState.Dig)
@@ -190,7 +201,14 @@ public class PlayerController : MonoBehaviour
 
                 ComsumeEnergy();
 
-                break;                
+                break;
+            case PlayerState.Freeze:
+
+                AudioManager.instance.StopSoundEffect(SoundEffectType.PlayerWalk);
+                AudioManager.instance.StopSoundEffect(SoundEffectType.BackToGround);
+                AudioManager.instance.StopSoundEffect(SoundEffectType.DigHole);
+
+                break;
         }
 
         
@@ -235,15 +253,18 @@ public class PlayerController : MonoBehaviour
     IEnumerator LevelCompletePerform()
     {
         var EnterDoorPos = m_finishPoint.transform.position + new Vector3(0, -0.36f, 0);
-        transform.DOMove(EnterDoorPos, 1.0f).SetEase(Ease.Linear);
 
-        transform.DOScale(new Vector3(0.5f, 0.5f, 0.5f), 1.0f).SetEase(Ease.Linear);
-        m_renderer.DOColor(new Color(255, 255, 255, 0), 1.0f).SetEase(Ease.Linear);
+        var ease = Ease.InQuad;
+
+        transform.DOMove(EnterDoorPos, 1.0f).SetEase(ease);
+        transform.DOScale(new Vector3(0.5f, 0.5f, 0.5f), 1.0f).SetEase(ease);
+        m_renderer.DOColor(new Color(255, 255, 255, 0), 1.0f).SetEase(ease);
 
         var randomRotateZ = 45 * Random.Range(-3f, 3f);
 
-        var endRotate = Quaternion.Euler(0, 0, randomRotateZ);
-        transform.DORotateQuaternion(endRotate, 1.0f);
+        var endRotate =  Quaternion.Euler(0, 0, randomRotateZ + m_renderer.transform.rotation.eulerAngles.z);
+        //transform.DORotateQuaternion(endRotate, 1.0f);
+        m_renderer.transform.DORotateQuaternion(endRotate, 1.0f);
 
         yield return new WaitForSeconds(1.0f);
     }
@@ -277,15 +298,18 @@ public class PlayerController : MonoBehaviour
 
         m_digHoleParticle.Stop();
 
+
         CurPlayerState = PlayerState.Walk;
+
         gameObject.layer = LayerMask.NameToLayer("Player_Normal");
 
         m_collider.enabled = false;
         m_collider.enabled = true;
 
-        yield return new WaitForSeconds(0.12f);
+        yield return new WaitForSeconds(0.2f);
 
-        m_renderer.transform.DORotateQuaternion(Quaternion.Euler(0, 0, 0), 0.1f).SetEase(Ease.Linear);
+        if (CurPlayerState != PlayerState.Freeze)
+            m_renderer.transform.DORotateQuaternion(Quaternion.Euler(0, 0, 0), 0.1f).SetEase(Ease.Linear);
 
         yield return null;
     }
@@ -355,6 +379,7 @@ public class PlayerController : MonoBehaviour
 
         //Gameplay
         m_curEnergy = m_maxEnergy;
+        m_digIndicator.transform.rotation = Quaternion.Euler(0, 0, 0);
 
         //Juicy
         m_dieParticle.SetActive(false);
@@ -365,7 +390,15 @@ public class PlayerController : MonoBehaviour
         transform.DOScale(new Vector3(100, 100, 100), transistTime).SetEase(transistEase);
         m_renderer.DOColor(new Color32(255, 255, 255, 255), transistTime).SetEase(transistEase);
 
-        yield return new WaitForSeconds(transistTime + 0.2f);
+        DOTween.To(() => m_curEnergyImage.fillAmount, x => m_curEnergyImage.fillAmount = x, 1.0f, transistTime).SetEase(Ease.Linear);
+
+        yield return new WaitForSeconds(transistTime/2);
+
+        AudioManager.instance.PlaySoundEffect(SoundEffectType.PlayerRevive);
+
+        yield return new WaitForSeconds(transistTime/2 + 0.2f);
+
+
 
         CurPlayerState = PlayerState.Walk;
         m_collider.enabled = true;
@@ -380,6 +413,7 @@ public class PlayerController : MonoBehaviour
         switch (m_curPlayerState)
         {
             case PlayerState.Walk:
+
                 break;
             case PlayerState.Dig:
                 m_animator.SetBool("IsDigging", false);
@@ -457,8 +491,12 @@ public class PlayerController : MonoBehaviour
         m_digIndicator.transform.DORotateQuaternion(newEuler, m_axisMovementTransistTime).SetEase(Ease.Linear);
 
         if (CurPlayerState == PlayerState.Dig)
-            m_renderer.transform.DORotateQuaternion(newEuler, m_axisMovementTransistTime).SetEase(Ease.Linear);
-        //m_digIndicator.transform.rotation
+            m_digRotateTween = m_renderer.transform.DORotateQuaternion(newEuler, m_axisMovementTransistTime).SetEase(Ease.Linear);
+        else
+        {
+            if (m_digRotateTween != null)
+                m_digRotateTween.Kill();
+        }
     }
 
     void RotateIndicatorByKeyboard()

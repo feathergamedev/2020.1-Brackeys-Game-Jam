@@ -17,7 +17,6 @@ public class GameManager : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.R))
         {
             PlayerController.instance.StartCoroutine("LevelFailPerform");
-//            LevelManager.instance.LevelRestart();
         }
     }
 }

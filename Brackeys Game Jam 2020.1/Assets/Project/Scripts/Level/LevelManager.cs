@@ -64,6 +64,8 @@ public class LevelManager : MonoBehaviour
     {
         AudioManager.instance.PlaySoundEffect(SoundEffectType.LevelComplete);
 
+        yield return new WaitForSeconds(0.3f);
+
         CameraFade.instance.FadeOut();
 
         yield return new WaitForSeconds(1.02f);
@@ -83,7 +85,7 @@ public class LevelManager : MonoBehaviour
     IEnumerator CallCreditPagePerform()
     {
         AudioManager.instance.FadeOutBGM();
-        yield return new WaitForSeconds(2.0f);
+        yield return new WaitForSeconds(4.0f);
         SceneManager.LoadScene("CreditPage");
     }
 
